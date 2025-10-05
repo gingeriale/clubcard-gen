@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-clubgreen: #166a66;
+  --color-textLabel: #e9e9a7;
+  /* --default-font-family: "GothamPro"; */
+}
+
+@font-face {
+  font-family: GothamPro;
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("./assets/GothaProBla.otf") format("otf");
+}
