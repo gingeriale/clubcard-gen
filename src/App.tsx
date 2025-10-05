@@ -79,7 +79,7 @@ export default function App() {
     }
 
     if (instaIcon) {
-      ctx.drawImage(instaIcon, canvas.width / 18, canvas.width / 1.95, canvas.width / 17, canvas.width / 17);
+      ctx.drawImage(instaIcon, canvas.width / 18, canvas.height / 1.225, canvas.width / 17, canvas.width / 17);
     }
 
     const fontSizeTitle = canvas.width / 15
@@ -94,16 +94,16 @@ export default function App() {
     ctx.textAlign = textAlignContent;
     ctx.font = `${fontWeight} ${fontSizeContent}px GothamPro`;
     ctx.fillStyle = fillStyleYellowGreen;
-    ctx.fillText("Name:", canvas.width / 16, canvas.width / 4);
-    ctx.fillText("Membership:", canvas.width / 16, canvas.width / 3.2);
-    ctx.fillText("Expiry:", canvas.width / 16, canvas.width / 2.65);
+    ctx.fillText("Name:", canvas.width / 16, canvas.height / 2.5);
+    ctx.fillText("Membership:", canvas.width / 16, canvas.height / 2);
+    ctx.fillText("Expiry:", canvas.width / 16, canvas.height / 1.66);
 
     ctx.fillStyle = fillStyleWhite;
-    ctx.fillText(name, canvas.width / 5, canvas.width / 4);
-    ctx.fillText(membershipType, canvas.width / 3.2, canvas.width / 3.2);
+    ctx.fillText(name, canvas.width / 5, canvas.height / 2.5);
+    ctx.fillText(membershipType, canvas.width / 3.2, canvas.height / 2);
     const todaysYear = new Date().getFullYear();
-    ctx.fillText(`31.12.${selectedYear === "current" ? todaysYear : todaysYear + 1}`, canvas.width / 4.8, canvas.width / 2.65);
-    ctx.fillText("irish_freediving_club", canvas.width / 8, canvas.width / 1.85)
+    ctx.fillText(`31.12.${selectedYear === "current" ? todaysYear : todaysYear + 1}`, canvas.width / 4.8, canvas.height / 1.66);
+    ctx.fillText("irish_freediving_club", canvas.width / 8, canvas.height / 1.16)
 
   };
 
