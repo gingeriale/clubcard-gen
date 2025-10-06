@@ -4,6 +4,14 @@ import instaIconSrc from "./assets/insticonwhite.png"
 import sampleBgSrc from "./assets/sampleBg.png"
 import gothamProFontSrc from "./assets/GothaProBla.otf"
 
+function parseNames(raw: string): string[] {
+  return raw.split(/[\n,]+/).map(s => s.trim()).filter(Boolean);
+}
+
+function safeFilename(s: string): string {
+  return (s || "card").replace(/[^\w-]+/g, "_").slice(0, 40);
+}
+
 export default function App() {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -47,24 +55,31 @@ export default function App() {
   }, [])
 
   const fontWeight = "normal";
-
   const textAlignTitle = "center";
   const fillStyleWhite = "#ffffff";
-
   const textAlignContent = "left";
   const fillStyleYellowGreen = "#e9e9a7";
 
-  const [name, setName] = useState("");
+  const [rawNames, setRawNames] = useState("");
+  const names = parseNames(rawNames);
+  const previewName = names[0] ?? "";
+
   const [selectedYear, setSelectedYear] = useState<"current" | "next">("current");
   const [membershipType, setMembershipType] = useState<"Freediver" | "Snorkeller">("Freediver");
 
-  const draw = () => {
+  const draw = (overrideName?: string) => {
+
     const canvas = canvasRef.current;
     if (!canvas || !fontGothamProReady) {
       return;
     }
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      return;
+    }
+
+    const displayName = (overrideName ?? previewName).trim()
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     if (bg) {
@@ -82,8 +97,8 @@ export default function App() {
       ctx.drawImage(instaIcon, canvas.width / 18, canvas.height / 1.225, canvas.width / 17, canvas.width / 17);
     }
 
-    const fontSizeTitle = canvas.width / 15
-    const fontSizeContent = canvas.width / 30
+    const fontSizeTitle = canvas.width / 15;
+    const fontSizeContent = canvas.width / 30;
 
     ctx.textBaseline = "middle";
     ctx.textAlign = textAlignTitle;
@@ -99,7 +114,7 @@ export default function App() {
     ctx.fillText("Expiry:", canvas.width / 16, canvas.height / 1.66);
 
     ctx.fillStyle = fillStyleWhite;
-    ctx.fillText(name, canvas.width / 5, canvas.height / 2.5);
+    ctx.fillText(displayName, canvas.width / 5, canvas.height / 2.5);
     ctx.fillText(membershipType, canvas.width / 3.2, canvas.height / 2);
     const todaysYear = new Date().getFullYear();
     ctx.fillText(`31.12.${selectedYear === "current" ? todaysYear : todaysYear + 1}`, canvas.width / 4.8, canvas.height / 1.66);
@@ -108,13 +123,14 @@ export default function App() {
   };
 
   useEffect(() => {
+
     draw();
   }, [
     fontGothamProReady,
     sampleBg,
     bg,
     instaIcon,
-    name,
+    previewName,
     membershipType,
     selectedYear,
     fontWeight,
@@ -125,25 +141,51 @@ export default function App() {
   ]);
 
   const onUpload = (file: File) => {
+
     const url = URL.createObjectURL(file);
     const bg = new Image();
     bg.onload = () => {
+
       setBg(bg);
     };
     bg.src = url;
   };
 
-  const download = () => {
+  const download = async () => {
+
+    if (names.length === 0) {
+      return;
+    }
+    if (!fontGothamProReady) {
+      return;
+    }
+
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    const imgData = canvas.toDataURL("image/png");
-    const pdf = new jsPDF({
-      orientation: "landscape",
-      unit: "mm",
-      format: [85, 54]
-    });
-    pdf.addImage(imgData, 'PNG', 0, 0, 86, 54);
-    pdf.save(`MembershipCardIFC_${name}`);
+    if (!canvas) {
+      return;
+    }
+
+    for (const currentName of names) {
+
+      draw(currentName);
+
+      // just in case for repainting
+      await new Promise(res => setTimeout(res, 10));
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: [85, 54]
+      });
+      pdf.addImage(imgData, 'PNG', 0, 0, 86, 54);
+
+      const fileName = `MembershipCardIFC_${safeFilename(currentName)}`;
+      pdf.save(fileName);
+
+      // just in case for downloading sequence
+      await new Promise(res => setTimeout(res, 10))
+    };
   };
 
   return (
@@ -159,18 +201,20 @@ export default function App() {
         <div className="flex flex-col items-center gap-4 mb-8">
           <div className="p-6 bg-white rounded-2xl shadow w-full max-w-md mx-auto">
 
-            <div className="group relative w-full max-w-md mb-8">
-              <input
-                type="text"
-                className="w-full bg-transparent outline-none px-3 py-2 text-center"
-                name="name"
-                maxLength={40}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter name and surname here"
+            <div className="relative w-full max-w-md mb-10"> {/* reserve space for hint */}
+              <textarea
+                className="w-full bg-transparent outline-none px-3 py-2 text-left resize-y"
+                name="names"
+                rows={4}
+                value={rawNames}
+                onChange={(e) => setRawNames(e.target.value)}
+                placeholder="Enter name (or multiple names, comma or new line separated)"
               />
               <span className="pointer-events-none absolute left-0 right-0 bottom-0 h-px bg-clubgreen" />
-              <span className="pointer-events-none absolute left-0 right-0 bottom-0 h-[2px] bg-clubgreen scale-x-0 group-focus-within:scale-x-100 transition-transform duration-150 origin-left" />
+              <span className="pointer-events-none absolute left-0 right-0 bottom-0 h-[2px] bg-clubgreen scale-x-0 focus-within:scale-x-100 transition-transform duration-150 origin-left" />
+              <div className="absolute left-0 -bottom-5 text-xs sm:text-sm text-neutral-600">
+                {names.length} card{names.length === 1 ? "" : "s"} will be generated
+              </div>
             </div>
 
             <div className="flex justify-center gap-6 mb-4">
@@ -201,7 +245,7 @@ export default function App() {
               </label>
             </div>
 
-            <div className="flex justify-center gap-6 mb-8">
+            <div className="flex justify-center gap-6 mb-6">
               <div className="font-bold">
                 Membership type:
               </div>
@@ -229,7 +273,7 @@ export default function App() {
               </label>
             </div>
 
-            <div className="flex justify-center mb-6">
+            <div className="flex justify-center mb-2">
               <div className="p-2 bg-white rounded-2xl text-center w-60">
                 <h2 className="font-semibold mb-3">Upload background</h2>
 
@@ -260,10 +304,10 @@ export default function App() {
           <div className="mb-8 flex justify-center">
             <button
               onClick={download}
-              disabled={!name.trim()}
-              className={`px-4 py-2 rounded-xl text-white transition-colors ${!name.trim() ? "bg-neutral-400 cursor-not-allowed" : "bg-clubgreen hover:opacity-90 cursor-pointer"}`}
+              disabled={names.length === 0}
+              className={`px-4 py-2 rounded-xl text-white transition-colors ${parseNames(rawNames).length === 0 ? "bg-neutral-400 cursor-not-allowed" : "bg-clubgreen hover:opacity-90 cursor-pointer"}`}
             >
-              Download PDF
+              Download PDF{names.length > 1 ? "s" : ""}
             </button>
           </div>
 
