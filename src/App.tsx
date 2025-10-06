@@ -41,9 +41,9 @@ export default function App() {
         document.fonts.load(`normal 40px "GothamPro"`),
         document.fonts.load(`normal 30px "GothamPro"`),
       ]);
+      setFontGothamReady(true);
     };
     loadFont()
-    setFontGothamReady(true);
   }, [])
 
   const fontWeight = "normal";
